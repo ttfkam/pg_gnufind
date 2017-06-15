@@ -1,5 +1,5 @@
 # pg_gnufind
-GNU find output as foreign tables
+GNU find output as foreign tables. Requires python 3.3+.
 
 ## Install
 On an Ubuntu system, run the following:
