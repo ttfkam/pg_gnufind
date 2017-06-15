@@ -1,0 +1,5 @@
+# gnufind extension
+comment = 'GNU find output as foreign tables'
+default_version = '1.0.0'
+relocatable = true
+requires = 'multicorn'
