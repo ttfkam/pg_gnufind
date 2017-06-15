@@ -53,7 +53,7 @@ class FindWrapper(ForeignDataWrapper):
     extensions = list(map((lambda h: h[1]), handlers[2]))  # set up extension queries
     num_exts = len(extensions)
     for extension in extensions:
-      args += ['-exec', extension, '{}', ';']
+      args += ['-exec'] + extension.split(' ') + ['{}', ';']
 
     proc = Popen(args, stdout=PIPE)  # run the program
     for line in proc.stdout:  # …and get the results

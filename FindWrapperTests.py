@@ -87,7 +87,8 @@ class FindWrapperTests(TestCase):
     self.assertEqual(row, { 'modified': '2017-03-22 22:33:15.3646792370',
                             'path': 'example.txt',
                             'mime_type': 'text/plain' })
-    expected = TEST_ARGS + [ '-printf', '%P\t%T+\n', '-exec', '/usr/bin/file -b -i', '{}', ';' ]
+    expected = TEST_ARGS + [ '-printf', '%P\t%T+\n',
+                             '-exec', '/usr/bin/file', '-b', '-i', '{}', ';' ]
     mock_popen.assert_called_with(expected, stdout=mock_pipe)
 
   @patch('FindWrapper.Popen')
