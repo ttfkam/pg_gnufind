@@ -13,25 +13,17 @@ def get_pg_config(kind, pg_config="pg_config"):
 
 include_dirs = [get_pg_config(d) for d in ("includedir", "pkgincludedir", "includedir-server")]
 
-multicorn_utils_module = Extension('multicorn._utils',
-                                   include_dirs=include_dirs,
-                                   extra_compile_args = ['-shared'],
-                                   sources=['src/utils.c'])
-
 requires=[]
 
-if sys.version_info[0] == 2:
-    if sys.version_info[1] == 6:
-        requires.append("ordereddict")
-    elif sys.version_info[1] < 6:
-        sys.exit("Sorry, you need at least python 2.6 for Multicorn")
+if sys.version_info[0] < 3 or sys.version_info[1] < 3:
+    sys.exit("Sorry, you need at least python 3.3 for pg_gnufind")
 
 setup(
     name='multicorn',
     version='__VERSION__',
     author='Kozea',
-    license='Postgresql',
+    license='GPL2',
     package_dir={'': 'python'},
-    packages=['multicorn', 'multicorn.fsfdw'],
-    ext_modules = [multicorn_utils_module]
+    packages=[],
+    ext_modules = []
 )
