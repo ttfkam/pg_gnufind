@@ -76,8 +76,6 @@ class FindWrapper(ForeignDataWrapper):
       for colname in list(map((lambda h: h[0]), handlers[1])):
         row[colname] = matches[colname]
       yield row
-    proc.close()
-    return None
 
   @staticmethod
   def __extract_root_directory(options):
