@@ -14,7 +14,7 @@ class multicorn:
 import sys
 sys.modules['multicorn'] = multicorn
 
-from FindWrapper import FindWrapper
+from ttfkam import FindWrapper
 
 ID_BUILTIN = 0
 ID_PATTERN = 1
@@ -35,8 +35,8 @@ class FindWrapperTests(TestCase):
     fw = FindWrapper({ 'root_directory': '/dir/no/slash' }, columns)
     self.assertEqual(fw._root, '/dir/no/slash/')
 
-  @patch('FindWrapper.Popen')
-  @patch('FindWrapper.PIPE')
+  @patch('ttfkam.Popen')
+  @patch('ttfkam.PIPE')
   def test_basic(self, mock_pipe, mock_popen):
     process_mock = MagicMock()
     process_attrs = { 'stdout': StringIO('example.txt\t2017-03-22+22:33:15.3646792370\n') }
@@ -56,8 +56,8 @@ class FindWrapperTests(TestCase):
     mock_popen.assert_called_with(expected, stdout=mock_pipe)
     self.assertEqual(row, { 'modified': '2017-03-22 22:33:15.3646792370', 'path': 'example.txt' })
 
-  @patch('FindWrapper.Popen')
-  @patch('FindWrapper.PIPE')
+  @patch('ttfkam.Popen')
+  @patch('ttfkam.PIPE')
   def test_multi(self, mock_pipe, mock_popen):
     process_mock = MagicMock()
     process_attrs = { 'stdout': StringIO('example1.txt\t2017-03-22+22:33:15.3646792370\n' +
@@ -72,8 +72,8 @@ class FindWrapperTests(TestCase):
     row = next(rows)
     self.assertEqual(row, { 'modified': '2017-03-22 22:33:45.3646792370', 'path': 'example2.txt' })
 
-  @patch('FindWrapper.Popen')
-  @patch('FindWrapper.PIPE')
+  @patch('ttfkam.Popen')
+  @patch('ttfkam.PIPE')
   def test_exec(self, mock_pipe, mock_popen):
     process_mock = MagicMock()
     process_attrs = { 'stdout': StringIO('example.txt\t2017-03-22+22:33:15.3646792370\n' +
@@ -91,8 +91,8 @@ class FindWrapperTests(TestCase):
                              '-exec', '/usr/bin/file', '-b', '-i', '{}', ';' ]
     mock_popen.assert_called_with(expected, stdout=mock_pipe)
 
-  @patch('FindWrapper.Popen')
-  @patch('FindWrapper.PIPE')
+  @patch('ttfkam.Popen')
+  @patch('ttfkam.PIPE')
   def test_alias(self, mock_pipe, mock_popen):
     process_mock = MagicMock()
     process_attrs = { 'stdout': StringIO('example.txt\t2017-03-22+22:33:15.3646792370\n') }

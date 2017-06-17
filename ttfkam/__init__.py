@@ -51,7 +51,6 @@ class FindWrapper(ForeignDataWrapper):
     args += [ '-printf', US.join(builtins) + '\n' ]  # append query patterns to program args
 
     extensions = list(map((lambda h: h[1]), handlers[2]))  # set up extension queries
-    num_exts = len(extensions)
     for extension in extensions:
       args += ['-exec'] + extension.split(' ') + ['{}', ';']
 
