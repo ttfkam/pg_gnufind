@@ -54,7 +54,7 @@ class FindWrapper(ForeignDataWrapper):
     for extension in extensions:
       args += ['-exec'] + extension.split(' ') + ['{}', ';']
 
-    proc = Popen(args, stdout=PIPE)  # run the program
+    proc = Popen(args, universal_newlines=True, stdout=PIPE)  # run the program
     for line in proc.stdout:  # …and get the results
       row = {}
 
