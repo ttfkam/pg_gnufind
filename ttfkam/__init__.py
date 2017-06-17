@@ -43,7 +43,7 @@ class FindWrapper(ForeignDataWrapper):
         path_index = len(handlers[0])
 
     # set up program arguments
-    args = ['/usr/bin/find', '-O3', '-ignore_readdir_race', self._root]
+    args = ['/usr/bin/find', '-O3', self._root, '-ignore_readdir_race']
 
     for qual in quals:  # process quals to reduce raw find output
       args += self._handlers[qual.name][3](qual) or []
