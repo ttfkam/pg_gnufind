@@ -29,7 +29,7 @@ class FindWrapper(ForeignDataWrapper):
     debug_quals = None
     for colname in columns:  # organize our columns into query types, e.g., patterns
       if colname == 'debug_quals':
-        debug_quals = json.dumps(quals)
+        debug_quals = str(quals)
         continue
       handler = self._handlers[colname]
       handlers[handler[0]].append((colname, handler[1], handler[2], handler[3]))
@@ -51,8 +51,8 @@ class FindWrapper(ForeignDataWrapper):
     args = ['/usr/bin/find', '-O3', self._root, '-ignore_readdir_race']
 
     # TODO: quals disabled until functionality complete
-    # for qual in quals:  # process quals to reduce raw find output
-    #   args += self._handlers[qual.name][3](qual) or []
+    for qual in quals:  # process quals to reduce raw find output
+      args += self._handlers[qual.field_name][3](qual) or []
 
     args += [ '-printf', US.join(builtins) + '\n' ]  # append query patterns to program args
 
