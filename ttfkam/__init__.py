@@ -52,7 +52,8 @@ class FindWrapper(ForeignDataWrapper):
 
     # TODO: quals disabled until functionality complete
     for qual in quals:  # process quals to reduce raw find output
-      args += self._handlers[qual.field_name][3](qual) or []
+      if not qual.is_list_operator:  # Can't convert from array syntax to GNU find
+        args += self._handlers[qual.field_name][3](qual)
 
     args += [ '-printf', US.join(builtins) + '\n' ]  # append query patterns to program args
 
@@ -149,6 +150,8 @@ class FindWrapper(ForeignDataWrapper):
 
 PATTERN_RE = re.compile('\(\?<\s*([^ \)]+)\s*>')
 
+EMPTY_LIST = []
+
 def time_serialize(val):
   return val.replace('+', ' ')
 
@@ -196,7 +199,7 @@ def depth_qual(qual):
     return ['-mindepth', qual.value - 1]
 
 def dir_qual(qual):
-  return ['-true']
+  return EMPTY_LIST
 
 def fs_qual(name):
   if qual.operator == '=':
@@ -227,10 +230,10 @@ def symlink_qual(qual):
     return ['-not', '-ilname', qual.value.replace('%', '*')]
 
 def path_qual(qual):
-  return ['-true']
+  return EMPTY_LIST
 
 def perm_qual(qual):
-  return ['-true']
+  return EMPTY_LIST
 
 def type_qual(qual):
   if qual.operator == '=':
@@ -255,7 +258,7 @@ def size_qual(qual):
     return ['-size', '+' + qual.value + 'c']
 
 def noop_qual(qual):
-  return ['-true']
+  return EMPTY_LIST
 
 RS = chr(30)
 US = '\t'  # chr(31)
