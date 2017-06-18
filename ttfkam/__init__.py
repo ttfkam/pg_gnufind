@@ -53,7 +53,7 @@ class FindWrapper(ForeignDataWrapper):
     # TODO: quals disabled until functionality complete
     for qual in quals:  # process quals to reduce raw find output
       if not qual.is_list_operator:  # Can't convert from array syntax to GNU find
-        args += self._handlers[qual.field_name][3](qual)
+        args += self._handlers[qual.field_name][2](qual)
 
     args += [ '-printf', US.join(builtins) + '\n' ]  # append query patterns to program args
 
@@ -186,17 +186,17 @@ def name_qual(qual):
 
 def depth_qual(qual):
   if qual.operator == '=':
-    return ['-depth', qual.value]
+    return ['-depth', str(qual.value)]
   elif qual.operator == '!=':
-    return ['-not', '-depth', qual.value]
+    return ['-not', '-depth', str(qual.value)]
   elif qual.operator == '<':
-    return ['-maxdepth', qual.value]
+    return ['-maxdepth', str(qual.value)]
   elif qual.operator == '>':
-    return ['-mindepth', qual.value]
+    return ['-mindepth', str(qual.value)]
   elif qual.operator == '<=':
-    return ['-maxdepth', qual.value + 1]
+    return ['-maxdepth', str(qual.value + 1)]
   elif qual.operator == '>=':
-    return ['-mindepth', qual.value - 1]
+    return ['-mindepth', str(qual.value - 1)]
 
 def dir_qual(qual):
   return EMPTY_LIST
@@ -209,15 +209,15 @@ def fs_qual(name):
 
 def hardlink_qual(qual):
   if qual.operator == '=':
-    return ['-links', qual.value]
+    return ['-links', str(qual.value)]
   elif qual.operator == '<':
-    return ['-links', '-' + qual.value]
+    return ['-links', '-' + str(qual.value)]
   elif qual.operator == '>':
-    return ['-links', '+' + qual.value]
+    return ['-links', '+' + str(qual.value)]
   elif qual.operator == '<=':
-    return ['-links', '-' + (qual.value + 1)]
+    return ['-links', '-' + str(qual.value + 1)]
   elif qual.operator == '>=':
-    return ['-links', '+' + (qual.value - 1)]
+    return ['-links', '+' + str(qual.value - 1)]
 
 def symlink_qual(qual):
   if qual.operator == '~~':
@@ -247,15 +247,15 @@ def owner_qual(name):
 
 def size_qual(qual):
   if qual.operator == '=':
-    return ['-size', qual.value + 'c']
+    return ['-size', '%dc' % (qual.value)]
   elif qual.operator == '<':
-    return ['-size', '-' + qual.value + 'c']
+    return ['-size', '-%dc' % (qual.value)]
   elif qual.operator == '>':
-    return ['-size', '+' + (qual.value + 1) + 'c']
+    return ['-size', '+%dc' % (qual.value + 1)]
   elif qual.operator == '<=':
-    return ['-size', '-' + (qual.value + 1) + 'c']
+    return ['-size', '-%dc' % (qual.value + 1)]
   elif qual.operator == '>=':
-    return ['-size', '+' + qual.value + 'c']
+    return ['-size', '+%dc' % (qual.value)]
 
 def noop_qual(qual):
   return EMPTY_LIST
