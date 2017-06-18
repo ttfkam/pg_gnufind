@@ -48,7 +48,8 @@ class FindWrapper(ForeignDataWrapper):
         path_index = len(handlers[0])
 
     # set up program arguments
-    args = ['/usr/bin/find', '-O3', self._root, '-ignore_readdir_race']
+    args = ['/usr/bin/find', '-O3', '-L', self._root,
+            '-regextype', 'posix-egrep', '-ignore_readdir_race']
 
     # TODO: quals disabled until functionality complete
     for qual in quals:  # process quals to reduce raw find output
@@ -175,14 +176,22 @@ def num_qual(name):
   return q
 
 def name_qual(qual):
-  if qual.operator == '~~':
+  if qual.operator == '~~':     # LIKE
     return ['-name', qual.value.replace('%', '*')]
-  elif qual.operator == '~~*':
+  elif qual.operator == '~~*':  # ILIKE
     return ['-iname', qual.value.replace('%', '*')]
   elif qual.operator == '!~~':
     return ['-not', '-name', qual.value.replace('%', '*')]
   elif qual.operator == '!~~*':
     return ['-not', '-iname', qual.value.replace('%', '*')]
+  elif qual.operator == '~':
+      return ['-regex', '(.+/)?%s' % qual.value]
+  elif qual.operator == '~*':
+      return ['-iregex', '(.+/)?%s' % qual.value]
+  elif qual.operator == '!~':
+      return ['-not', '-regex', '(.+/)?%s' % qual.value]
+  elif qual.operator == '!~*':
+      return ['-not', '-iregex', '(.+/)?%s' % qual.value]
 
 def depth_qual(qual):
   if qual.operator == '=':
@@ -200,7 +209,22 @@ def depth_qual(qual):
     return ['-mindepth', str(qual.value - 1)]
 
 def dir_qual(qual):
-  return EMPTY_LIST
+  if qual.operator == '~~':     # LIKE
+    return ['-name', qual.value.replace('%', '*') + '/*']
+  elif qual.operator == '~~*':  # ILIKE
+    return ['-iname', qual.value.replace('%', '*') + '/*']
+  elif qual.operator == '!~~':
+    return ['-not', '-name', qual.value.replace('%', '*') + '/*']
+  elif qual.operator == '!~~*':
+    return ['-not', '-iname', qual.value.replace('%', '*') + '/*']
+  elif qual.operator == '~':
+      return ['-regex', '%s(/[^/]+)?' % qual.value]
+  elif qual.operator == '~*':
+      return ['-iregex', '%s(/[^/]+)?' % qual.value]
+  elif qual.operator == '!~':
+      return ['-not', '-regex', '%s(/[^/]+)?' % qual.value]
+  elif qual.operator == '!~*':
+      return ['-not', '-iregex', '%s(/[^/]+)?' % qual.value]
 
 def fs_qual(name):
   if qual.operator == '=':
@@ -231,7 +255,22 @@ def symlink_qual(qual):
     return ['-not', '-ilname', qual.value.replace('%', '*')]
 
 def path_qual(qual):
-  return EMPTY_LIST
+  if qual.operator == '~~':     # LIKE
+    return ['-regex', qual.value.replace('%', '.*')]
+  elif qual.operator == '~~*':  # ILIKE
+    return ['-iregex', qual.value.replace('%', '.*')]
+  elif qual.operator == '!~~':
+    return ['-not', '-regex', qual.value.replace('%', '.*')]
+  elif qual.operator == '!~~*':
+    return ['-not', '-iregex', qual.value.replace('%', '.*')]
+  elif qual.operator == '~':
+    return ['-regex', qual.value]
+  elif qual.operator == '~*':
+    return ['-iregex', qual.value]
+  elif qual.operator == '!~':
+    return ['-not', '-regex', qual.value]
+  elif qual.operator == '!~*':
+    return ['-not', '-iregex', qual.value]
 
 def perm_qual(qual):
   return EMPTY_LIST
@@ -261,7 +300,6 @@ def size_qual(qual):
 def noop_qual(qual):
   return EMPTY_LIST
 
-RS = chr(30)
 US = '\t'  # chr(31)
 
 BUILTINS = {

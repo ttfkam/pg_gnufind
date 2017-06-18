@@ -28,7 +28,8 @@ ID_PATTERN = 1
 ID_EXECUTABLE = 2
 
 TEST_DIR = '/usr/share/example/'
-TEST_ARGS = ['/usr/bin/find', '-O3', TEST_DIR, '-ignore_readdir_race']
+TEST_ARGS = ['/usr/bin/find', '-O3', '-L', TEST_DIR,
+             '-regextype', 'posix-egrep', '-ignore_readdir_race']
 
 class FindWrapperTests(TestCase):
 
@@ -59,7 +60,6 @@ class FindWrapperTests(TestCase):
     self.assertEqual(fw._handlers['modified'][1], '%T+')
     row = next(fw.execute([], columns))
     expected = TEST_ARGS + [ '-printf', '%P\t%T+\n' ]
-    # self.assertTrue(mock_popen.called)
     mock_popen.assert_called_with(expected, stdout=mock_pipe, universal_newlines=True)
     self.assertEqual(row, { 'modified': '2017-03-22 22:33:15.3646792370', 'path': 'example.txt' })
 
