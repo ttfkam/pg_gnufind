@@ -1,6 +1,7 @@
 from multicorn import ForeignDataWrapper
 import re
 from subprocess import Popen, PIPE
+import json
 
 # wrapper 'geekspeak.FindWrapper',
 # options(
@@ -25,7 +26,11 @@ class FindWrapper(ForeignDataWrapper):
       [],  # extensions
     ]
     path_index = -1
+    debug_quals = None
     for colname in columns:  # organize our columns into query types, e.g., patterns
+      if colname == 'debug_quals':
+        debug_quals = json.dumps(quals)
+        continue
       handler = self._handlers[colname]
       handlers[handler[0]].append((colname, handler[1], handler[2], handler[3]))
       if colname == 'path' and handler[0] == 0:  # if we've got a path and it's not aliased
@@ -45,8 +50,9 @@ class FindWrapper(ForeignDataWrapper):
     # set up program arguments
     args = ['/usr/bin/find', '-O3', self._root, '-ignore_readdir_race']
 
-    for qual in quals:  # process quals to reduce raw find output
-      args += self._handlers[qual.name][3](qual) or []
+    # TODO: quals disabled until functionality complete
+    # for qual in quals:  # process quals to reduce raw find output
+    #   args += self._handlers[qual.name][3](qual) or []
 
     args += [ '-printf', US.join(builtins) + '\n' ]  # append query patterns to program args
 
@@ -57,6 +63,9 @@ class FindWrapper(ForeignDataWrapper):
     proc = Popen(args, universal_newlines=True, stdout=PIPE)  # run the program
     for line in proc.stdout:  # …and get the results
       row = {}
+
+      if debug_quals != None:
+        row['debug_quals'] = debug_quals
 
       ext_handlers = handlers[2]  # process extensions
       for i in range(0, len(ext_handlers)):
@@ -131,6 +140,8 @@ class FindWrapper(ForeignDataWrapper):
         handler = BUILTINS[colname]
         serializer = default_serializer if len(handler) < 3 else handler[2]
         handlers[colname] = (0, handler[0], handler[1], serializer)
+      elif colname == 'debug_quals':
+        continue  # handle by name
       else:
         log_to_postgres(logging.ERROR, 'Invalid column: ' + colname)
         return
