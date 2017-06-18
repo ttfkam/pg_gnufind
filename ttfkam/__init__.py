@@ -186,7 +186,8 @@ def name_qual(qual):
 
 def depth_qual(qual):
   if qual.operator == '=':
-    return ['-depth', str(qual.value)]
+    depth = str(qual.value)
+    return ['-mindepth', depth, '-maxdepth', depth]
   elif qual.operator == '!=':
     return ['-not', '-depth', str(qual.value)]
   elif qual.operator == '<':

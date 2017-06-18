@@ -123,9 +123,9 @@ class FindWrapperTests(TestCase):
     mock_popen.return_value = process_mock
     columns = { 'path': None, 'depth': None, 'type': None }
     fw = FindWrapper({ 'root_directory': TEST_DIR }, columns)
-    row = next(fw.execute([Qual('depth','=',1), Qual('type','=','f')], { 'path': None }))
+    row = next(fw.execute([Qual('depth','=',2), Qual('type','=','f')], { 'path': None }))
     self.assertEqual(row, { 'path': 'example.txt' })
-    expected = TEST_ARGS + [ '-depth', '1', '-type', 'f', '-printf', '%P\n' ]
+    expected = TEST_ARGS + [ '-mindepth', '2', '-maxdepth', '2', '-type', 'f', '-printf', '%P\n' ]
     mock_popen.assert_called_with(expected, stdout=mock_pipe, universal_newlines=True)
 
 if __name__ == '__main__':
