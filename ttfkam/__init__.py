@@ -54,13 +54,14 @@ class FindWrapper(ForeignDataWrapper):
     # TODO: quals disabled until functionality complete
     for qual in quals:  # process quals to reduce raw find output
       if not qual.is_list_operator:  # Can't convert from array syntax to GNU find
-        args += self._handlers[qual.field_name][2](qual)
+        args += self._handlers[qual.field_name][2](qual) or EMPTY_LIST
 
     args += [ '-printf', US.join(builtins) + '\n' ]  # append query patterns to program args
 
     extensions = list(map((lambda h: h[1]), handlers[2]))  # set up extension queries
     for extension in extensions:
-      args += ['-exec'] + extension.split(' ') + ['{}', ';']
+      suffix = [';'] if '{}' in extension else ['{}', ';']
+      args += ['-exec'] + extension.split(' ') + suffix
 
     proc = Popen(args, universal_newlines=True, stdout=PIPE)  # run the program
     for line in proc.stdout:  # …and get the results
@@ -162,17 +163,17 @@ def default_serializer(val):
 def time_qual(name):
   def q(qual):
     if qual.operator == '=':
-      return ['-' + name + 'min', '0']
+      return ['-%smin' % name, '0']
     elif qual.operator in ('<', '<='):
-      return ['-not', '-newer' + name + 't', qual.value]
+      return ['-not', '-newer%st' % name, qual.value]
     elif qual.operator in ('>', '>='):
-      return ['-newer' + name + 't', qual.value]
+      return ['-newer%st' % name, qual.value]
   return q
 
-def num_qual(name):
+def num_qual(param):
   def q(qual):
     if qual.operator == '=':
-      return ['-' + name, qual.value]
+      return [param, str(qual.value)]
   return q
 
 def name_qual(qual):
@@ -184,14 +185,18 @@ def name_qual(qual):
     return ['-not', '-name', qual.value.replace('%', '*')]
   elif qual.operator == '!~~*':
     return ['-not', '-iname', qual.value.replace('%', '*')]
-  elif qual.operator == '~':
-      return ['-regex', '(.+/)?%s' % qual.value]
-  elif qual.operator == '~*':
-      return ['-iregex', '(.+/)?%s' % qual.value]
-  elif qual.operator == '!~':
-      return ['-not', '-regex', '(.+/)?%s' % qual.value]
-  elif qual.operator == '!~*':
-      return ['-not', '-iregex', '(.+/)?%s' % qual.value]
+  else:
+    regex = qual.value
+    if regex[0] == '^':
+      regex = '(.+/)?' + regex[1]
+    if qual.operator == '~':
+      return ['-regex', qual.value]
+    elif qual.operator == '~*':
+      return ['-iregex', qual.value]
+    elif qual.operator == '!~':
+      return ['-not', '-regex', qual.value]
+    elif qual.operator == '!~*':
+      return ['-not', '-iregex', qual.value]
 
 def depth_qual(qual):
   if qual.operator == '=':
@@ -217,14 +222,6 @@ def dir_qual(qual):
     return ['-not', '-name', qual.value.replace('%', '*') + '/*']
   elif qual.operator == '!~~*':
     return ['-not', '-iname', qual.value.replace('%', '*') + '/*']
-  elif qual.operator == '~':
-      return ['-regex', '%s(/[^/]+)?' % qual.value]
-  elif qual.operator == '~*':
-      return ['-iregex', '%s(/[^/]+)?' % qual.value]
-  elif qual.operator == '!~':
-      return ['-not', '-regex', '%s(/[^/]+)?' % qual.value]
-  elif qual.operator == '!~*':
-      return ['-not', '-iregex', '%s(/[^/]+)?' % qual.value]
 
 def fs_qual(name):
   if qual.operator == '=':
@@ -272,17 +269,14 @@ def path_qual(qual):
   elif qual.operator == '!~*':
     return ['-not', '-iregex', qual.value]
 
-def perm_qual(qual):
-  return EMPTY_LIST
-
 def type_qual(qual):
   if qual.operator == '=':
-    return ['-type', qual.value]
+    return ['-type', qual.value[0]]
 
-def owner_qual(name):
+def owner_qual(param):
   def q(qual):
     if qual.operator == '=':
-      return ['-' + name, qual.value]
+      return [param, qual.value]
   return q
 
 def size_qual(qual):
@@ -304,22 +298,22 @@ US = '\t'  # chr(31)
 
 BUILTINS = {
   'accessed': ('%A+', time_qual('a'), time_serialize),
-  'filename': ('%f', name_qual),
   'changed': ('%C+', time_qual('c'), time_serialize),
   'depth': ('%d', depth_qual),
   'dirname': ('%h', dir_qual),
+  'eperms': ('%M', noop_qual),
+  'filename': ('%f', name_qual),
   'filesystem': ('%F', fs_qual),
-  'gid': ('%G', num_qual('gid')),
-  'group': ('%g', owner_qual('group')),
-  'hardlink_count': ('%n', hardlink_qual),
-  'inum': ('%i', num_qual('inum')),
+  'gid': ('%G', num_qual('-gid')),
+  'group': ('%g', owner_qual('-group')),
+  'hardlinks': ('%n', hardlink_qual),
+  'inum': ('%i', num_qual('-inum')),
   'modified': ('%T+', time_qual('m'), time_serialize),
   'path': ('%P', path_qual),
-  'permissions': ('%m', perm_qual),
-  'permissions_expanded': ('%M', perm_qual),
+  'perms': ('%m', noop_qual),
   'size': ('%s', size_qual),
   'symlink': ('%l', symlink_qual),
   'type': ('%Y', type_qual),
-  'uid': ('%U', num_qual('uid')),
-  'user': ('%u', owner_qual('user'))
+  'uid': ('%U', num_qual('-uid')),
+  'user': ('%u', owner_qual('-user'))
   }
