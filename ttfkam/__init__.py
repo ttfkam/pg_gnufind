@@ -112,7 +112,7 @@ class FindWrapper(ForeignDataWrapper):
       value = options[option]
       if value[0] in ('/', '~'):  # executable
         handlers[option] = (2, value, noop_qual, default_serializer)
-      elif option.find('(') == -1:
+      elif value.find('(?P<') == -1:
         if value in BUILTINS:
           alias = BUILTINS[value]
           serializer = default_serializer if len(alias) < 3 else alias[2]
@@ -150,7 +150,7 @@ class FindWrapper(ForeignDataWrapper):
         return
 
 
-PATTERN_RE = re.compile('\(\?<\s*([^ \)]+)\s*>')
+PATTERN_RE = re.compile('\(\?P<\s*([^ \)]+)\s*>')
 
 EMPTY_LIST = []
 
