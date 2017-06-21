@@ -112,7 +112,7 @@ class FindWrapper(ForeignDataWrapper):
       value = options[option]
       if value[0] in ('/', '~'):  # executable
         handlers[option] = (2, value, noop_qual, default_serializer)
-      elif value.find('(?P<') == -1:
+      elif '(' not in value:  # not a regex pattern, therefore an alias
         if value in BUILTINS:
           alias = BUILTINS[value]
           serializer = default_serializer if len(alias) < 3 else alias[2]
@@ -120,7 +120,9 @@ class FindWrapper(ForeignDataWrapper):
         else:
           log_to_postgres(logging.ERROR, 'Invalid alias: ' + value)
           return
-      else:
+      else:  # assumed to be a pattern unless an error proves otherwise
+        if '(?P<' not in value:  # if there's no group name
+          value = value.replace('(', '(?P<%s>' % option, 1)  # use the option name as the group name
         colnames = [m.group(1) for m in PATTERN_RE.finditer(value) if m]
         if option in colnames:
           for colname in colnames:

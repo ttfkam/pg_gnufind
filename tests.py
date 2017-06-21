@@ -135,11 +135,26 @@ class FindWrapperTests(TestCase):
     process_attrs = { 'stdout': StringIO('example.txt\n') }
     process_mock.configure_mock(**process_attrs)
     mock_popen.return_value = process_mock
-    columns = { 'path': None, 'depth': None, 'type': None, 'stem': None, 'extension': None }
+    columns = { 'stem': None, 'extension': None }
     fw = FindWrapper({ 'root_directory': TEST_DIR,
                        'stem': '(?P<stem>[^.]+)\\.(?P<extension>[^.]+)' }, columns)
-    row = next(fw.execute([], { 'stem': None, 'extension': None }))
+    row = next(fw.execute([], columns))
     self.assertEqual(row, { 'extension': 'txt', 'stem': 'example' })
+    expected = TEST_ARGS + [ '-printf', '%P\n' ]
+    mock_popen.assert_called_with(expected, stdout=mock_pipe, universal_newlines=True)
+
+  @patch('ttfkam.Popen')
+  @patch('ttfkam.PIPE')
+  def test_anonymous_pattern(self, mock_pipe, mock_popen):
+    process_mock = MagicMock()
+    process_attrs = { 'stdout': StringIO('example.txt\n') }
+    process_mock.configure_mock(**process_attrs)
+    mock_popen.return_value = process_mock
+    columns = { 'stem': None }
+    fw = FindWrapper({ 'root_directory': TEST_DIR,
+                       'stem': '([^.]+)\\.[^.]+' }, columns)
+    row = next(fw.execute([], columns))
+    self.assertEqual(row, { 'stem': 'example' })
     expected = TEST_ARGS + [ '-printf', '%P\n' ]
     mock_popen.assert_called_with(expected, stdout=mock_pipe, universal_newlines=True)
 
