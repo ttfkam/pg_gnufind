@@ -160,7 +160,7 @@ def time_serialize(val):
   return val.replace('+', ' ')
 
 def default_serializer(val):
-  return val
+  return val if len(val) > 0 else None
 
 def time_qual(name):
   def q(qual):

@@ -44,6 +44,7 @@ Within PostgreSQL, install the multicorn extension, create the foreign data serv
     OPTIONS (wrapper 'ttfkam.FindWrapper');  -- Searches the default python path
 
   -- Now create your table. All of these columns are optional.
+  -- Note: "group" and "user" are quoted because they are reserved SQL words.
   CREATE FOREIGN TABLE gs.media_fdw (
     accessed timestamptz NOT NULL,  -- Last accessed (reverts to last modified if noatime is set)
     changed timestamptz NOT NULL,   -- Last changed (reverts to last modified if noctime is set)
@@ -53,7 +54,7 @@ Within PostgreSQL, install the multicorn extension, create the foreign data serv
     filename varchar,               -- Just the file portion, omitting directories
     filesystem varchar,             -- Filesystem type, e.g., ext4, zfs
     gid int4 NOT NULL,              -- Filesystem entry group id (see: /etc/group)
-    group varchar NOT NULL,         -- Filesystem entry group name (see: /etc/group)
+    "group" varchar NOT NULL,       -- Filesystem entry group name (see: /etc/group)
     hardlinks smallint NOT NULL,    -- Number of hardlinks that refer to this bag o' bytes
     inum int8 NOT NULL,             -- inode number from the filesystem
     modified timestamptz NOT NULL,  -- Last modified
@@ -63,7 +64,7 @@ Within PostgreSQL, install the multicorn extension, create the foreign data serv
     symlink character varying,      -- If it's a symbolic link, where it points to
     type character(1) NOT NULL,     -- Entry type, e.g., 'f' for file, 'd' for directory
     uid int4 NOT NULL,              -- Filesystem entry user id (see: /etc/passwd)
-    user varchar NOT NULL,          -- Filesystem entry user name (see: /etc/passwd)
+    "user" varchar NOT NULL,        -- Filesystem entry user name (see: /etc/passwd)
 
     -- Here's where it gets fun. Warning, accessing external program output hurts performance
     mime varchar,
@@ -74,7 +75,8 @@ Within PostgreSQL, install the multicorn extension, create the foreign data serv
   )
   SERVER gnufind  -- Make sure this matches your CREATE SERVER statement above
   OPTIONS (
-    root_directory '/var/some/dir/to/scan/',  -- This option is mandatory!
+    -- This option is mandatory and the directory needs to exist.
+    root_directory '/var/some/dir/to/scan/',
 
     -- This is how the mime and encoding are gathered as listed above.
     -- You can pass in any program as long as it returns only a single line of text.
