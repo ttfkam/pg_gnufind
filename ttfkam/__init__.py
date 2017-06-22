@@ -1,12 +1,9 @@
 from multicorn import ForeignDataWrapper
 import re
 from subprocess import Popen, PIPE
-import json
 
 # wrapper 'geekspeak.FindWrapper',
 # options(
-#   prefix='/usr/bin/head -c 10 {}'    # first ten bytes
-#   suffix='/usr/bin/tail -c 10 {}'    # last ten bytes
 #   mimetype='/usr/bin/file -b -i {}'  # mime type
 #   season='s(?P<season>\\d{2})e(?P<episode>\\d{2})(?:  -  (?P<name>.*?))\.(?P<extension>[^.]{3,4})'
 # )
@@ -17,7 +14,7 @@ class FindWrapper(ForeignDataWrapper):
     self._root = FindWrapper.__extract_root_directory(options)
     self._handlers = {}
     self._patterns = []
-    FindWrapper.__init_handlers(self._handlers, self._patterns, options, columns)
+    self.__init_handlers(self._handlers, self._patterns, options, columns)
 
   def execute(self, quals, columns):
     handlers = [
@@ -54,7 +51,7 @@ class FindWrapper(ForeignDataWrapper):
     # TODO: quals disabled until functionality complete
     for qual in quals:  # process quals to reduce raw find output
       if not qual.is_list_operator:  # Can't convert from array syntax to GNU find
-        args += self._handlers[qual.field_name][2](qual) or EMPTY_LIST
+        args += self._handlers[qual.field_name][2](qual, self._root) or EMPTY_LIST
 
     args += [ '-printf', US.join(builtins) + '\n' ]  # append query patterns to program args
 
@@ -80,11 +77,11 @@ class FindWrapper(ForeignDataWrapper):
       parts = line.rstrip("\n\r").split(US)
       for i in range(0, len(builtin_handlers)):
         colname = builtin_handlers[i][0]
-        row[colname] = builtin_handlers[i][3](parts[i])
+        row[colname] = builtin_handlers[i][3](parts[i], self._root)
 
       matches = {}  # process patterns
-      for i in range(0, len(patterns)):
-        matches.update(patterns[i].fullmatch(parts[path_index]).groupdict())
+      for pattern in patterns:
+        matches.update(patterns[pattern].fullmatch(parts[path_index]).groupdict())
       for colname in list(map((lambda h: h[0]), handlers[1])):
         row[colname] = matches[colname]
       yield row
@@ -100,8 +97,7 @@ class FindWrapper(ForeignDataWrapper):
     else:
       log_to_postgres(logging.ERROR, 'No root_directory specified in options')
 
-  @staticmethod
-  def __init_handlers(handlers, patterns, options, columns):
+  def __init_handlers(self, handlers, patterns, options, columns):
     for option in options:
       if option not in columns:
         log_to_postgres(logging.ERROR, 'Invalid column: ' + option)
@@ -120,7 +116,9 @@ class FindWrapper(ForeignDataWrapper):
           return
       else:  # assumed to be a pattern unless an error proves otherwise
         if '(?P<' not in value:  # if there's no group name
-          value = value.replace('(', '(?P<%s>' % option, 1)  # use the option name as the group name
+          # use the option name as the group name
+          value = value.replace('(', '(?P<%s>' % option, 1)
+        value = (self._root + value) if value[0] != '^' else (self._root + value[1:])
         colnames = [m.group(1) for m in PATTERN_RE.finditer(value) if m]
         if option in colnames:
           for colname in colnames:
@@ -156,14 +154,18 @@ PATTERN_RE = re.compile('\(\?P<\s*([^ \)]+)\s*>')
 
 EMPTY_LIST = []
 
-def time_serialize(val):
+def time_serializer(val, path):
   return val.replace('+', ' ')
 
-def default_serializer(val):
+def dir_serializer(val, path):
+  plen = len(path)
+  return val[plen:] if plen < len(val) else None
+
+def default_serializer(val, path):
   return val if len(val) > 0 else None
 
 def time_qual(name):
-  def q(qual):
+  def q(qual, path):
     if qual.operator == '=':
       return ['-%smin' % name, '0']
     elif qual.operator in ('<', '<='):
@@ -173,12 +175,12 @@ def time_qual(name):
   return q
 
 def num_qual(param):
-  def q(qual):
+  def q(qual, path):
     if qual.operator == '=':
       return [param, str(qual.value)]
   return q
 
-def name_qual(qual):
+def name_qual(qual, path):
   if qual.operator == '~~':     # LIKE
     return ['-name', qual.value.replace('%', '*')]
   elif qual.operator == '~~*':  # ILIKE
@@ -187,20 +189,8 @@ def name_qual(qual):
     return ['-not', '-name', qual.value.replace('%', '*')]
   elif qual.operator == '!~~*':
     return ['-not', '-iname', qual.value.replace('%', '*')]
-  else:
-    regex = qual.value
-    if regex[0] == '^':
-      regex = '(.+/)?' + regex[1]
-    if qual.operator == '~':
-      return ['-regex', qual.value]
-    elif qual.operator == '~*':
-      return ['-iregex', qual.value]
-    elif qual.operator == '!~':
-      return ['-not', '-regex', qual.value]
-    elif qual.operator == '!~*':
-      return ['-not', '-iregex', qual.value]
 
-def depth_qual(qual):
+def depth_qual(qual, path):
   if qual.operator == '=':
     depth = str(qual.value)
     return ['-mindepth', depth, '-maxdepth', depth]
@@ -215,23 +205,13 @@ def depth_qual(qual):
   elif qual.operator == '>=':
     return ['-mindepth', str(qual.value - 1)]
 
-def dir_qual(qual):
-  if qual.operator == '~~':     # LIKE
-    return ['-name', qual.value.replace('%', '*') + '/*']
-  elif qual.operator == '~~*':  # ILIKE
-    return ['-iname', qual.value.replace('%', '*') + '/*']
-  elif qual.operator == '!~~':
-    return ['-not', '-name', qual.value.replace('%', '*') + '/*']
-  elif qual.operator == '!~~*':
-    return ['-not', '-iname', qual.value.replace('%', '*') + '/*']
-
-def fs_qual(name):
+def fs_qual(name, path):
   if qual.operator == '=':
     return ['-fstype', qual.value]
   elif qual.operator == '!=':
     return ['-not', '-fstype', qual.value]
 
-def hardlink_qual(qual):
+def hardlink_qual(qual, path):
   if qual.operator == '=':
     return ['-links', str(qual.value)]
   elif qual.operator == '<':
@@ -243,7 +223,7 @@ def hardlink_qual(qual):
   elif qual.operator == '>=':
     return ['-links', '+' + str(qual.value - 1)]
 
-def symlink_qual(qual):
+def symlink_qual(qual, path):
   if qual.operator == '~~':
     return ['-lname', qual.value.replace('%', '*')]
   elif qual.operator == '~~*':
@@ -253,35 +233,39 @@ def symlink_qual(qual):
   elif qual.operator == '!~~*':
     return ['-not', '-ilname', qual.value.replace('%', '*')]
 
-def path_qual(qual):
+def path_qual(qual, path):
+  value = path + qual.value
   if qual.operator == '~~':     # LIKE
-    return ['-regex', qual.value.replace('%', '.*')]
+    return ['-regex', value.replace('%', '.*')]
   elif qual.operator == '~~*':  # ILIKE
-    return ['-iregex', qual.value.replace('%', '.*')]
+    return ['-iregex', value.replace('%', '.*')]
   elif qual.operator == '!~~':
-    return ['-not', '-regex', qual.value.replace('%', '.*')]
+    return ['-not', '-regex', value.replace('%', '.*')]
   elif qual.operator == '!~~*':
-    return ['-not', '-iregex', qual.value.replace('%', '.*')]
-  elif qual.operator == '~':
-    return ['-regex', qual.value]
-  elif qual.operator == '~*':
-    return ['-iregex', qual.value]
-  elif qual.operator == '!~':
-    return ['-not', '-regex', qual.value]
-  elif qual.operator == '!~*':
-    return ['-not', '-iregex', qual.value]
+    return ['-not', '-iregex', value.replace('%', '.*')]
+  else:
+    value = '.*' + value if value[0] == '^' else value[1:]
+    value = value + '.*' if value[-1] != '$' else value[:-1]
+    if qual.operator == '~':
+      return ['-regex', value]
+    elif qual.operator == '~*':
+      return ['-iregex', value]
+    elif qual.operator == '!~':
+      return ['-not', '-regex', value]
+    elif qual.operator == '!~*':
+      return ['-not', '-iregex', value]
 
-def type_qual(qual):
+def type_qual(qual, path):
   if qual.operator == '=':
     return ['-type', qual.value[0]]
 
 def owner_qual(param):
-  def q(qual):
+  def q(qual, path):
     if qual.operator == '=':
       return [param, qual.value]
   return q
 
-def size_qual(qual):
+def size_qual(qual, path):
   if qual.operator == '=':
     return ['-size', '%dc' % (qual.value)]
   elif qual.operator == '<':
@@ -293,17 +277,17 @@ def size_qual(qual):
   elif qual.operator == '>=':
     return ['-size', '+%dc' % (qual.value)]
 
-def noop_qual(qual):
+def noop_qual(qual, path):
   return EMPTY_LIST
 
-US = '\t'  # chr(31)
+US = '\t'  # builtin pattern unit separator
 
 BUILTINS = {
-  'accessed': ('%A+', time_qual('a'), time_serialize),
-  'changed': ('%C+', time_qual('c'), time_serialize),
+  'accessed': ('%A+', time_qual('a'), time_serializer),
+  'changed': ('%C+', time_qual('c'), time_serializer),
   'depth': ('%d', depth_qual),
   'devnum': ('%D'),
-  'dirname': ('%h', dir_qual),
+  'dirname': ('%h', path_qual, dir_serializer),
   'eperms': ('%M'),
   'filename': ('%f', name_qual),
   'filesystem': ('%F', fs_qual),
@@ -312,7 +296,7 @@ BUILTINS = {
   'group': ('%g', owner_qual('-group')),
   'hardlinks': ('%n', hardlink_qual),
   'inum': ('%i', num_qual('-inum')),
-  'modified': ('%T+', time_qual('m'), time_serialize),
+  'modified': ('%T+', time_qual('m'), time_serializer),
   'path': ('%P', path_qual),
   'perms': ('%m'),
   'selinux': ('%Z'),

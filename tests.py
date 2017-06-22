@@ -132,7 +132,7 @@ class FindWrapperTests(TestCase):
   @patch('ttfkam.PIPE')
   def test_pattern(self, mock_pipe, mock_popen):
     process_mock = MagicMock()
-    process_attrs = { 'stdout': StringIO('example.txt\n') }
+    process_attrs = { 'stdout': StringIO(TEST_DIR + 'example.txt\n') }
     process_mock.configure_mock(**process_attrs)
     mock_popen.return_value = process_mock
     columns = { 'stem': None, 'extension': None }
@@ -147,7 +147,7 @@ class FindWrapperTests(TestCase):
   @patch('ttfkam.PIPE')
   def test_anonymous_pattern(self, mock_pipe, mock_popen):
     process_mock = MagicMock()
-    process_attrs = { 'stdout': StringIO('example.txt\n') }
+    process_attrs = { 'stdout': StringIO(TEST_DIR + 'example.txt\n') }
     process_mock.configure_mock(**process_attrs)
     mock_popen.return_value = process_mock
     columns = { 'stem': None }
