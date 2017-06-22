@@ -159,7 +159,7 @@ def time_serializer(val, path):
 
 def dir_serializer(val, path):
   plen = len(path)
-  return val[plen:] if plen < len(val) else None
+  return val[plen:] if plen < len(val) else ''
 
 def default_serializer(val, path):
   return val if len(val) > 0 else None
