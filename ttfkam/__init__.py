@@ -146,7 +146,7 @@ class FindWrapper(ForeignDataWrapper):
         return
 
 def as_handler(builtin):
-  qualifier = noop_qual if len(builtin) < 2 else builtin[1]
+  qualifier = builtin[1]
   serializer = default_serializer if len(builtin) < 3 else builtin[2]
   return (0, builtin[0], qualifier, serializer)
 
@@ -286,22 +286,22 @@ BUILTINS = {
   'accessed': ('%A+', time_qual('a'), time_serializer),
   'changed': ('%C+', time_qual('c'), time_serializer),
   'depth': ('%d', depth_qual),
-  'devnum': ('%D'),
+  'devnum': ('%D', noop_qual),
   'dirname': ('%h', path_qual, dir_serializer),
-  'eperms': ('%M'),
+  'eperms': ('%M', noop_qual),
   'filename': ('%f', name_qual),
   'filesystem': ('%F', fs_qual),
-  'fullpath': ('%p'),
+  'fullpath': ('%p', noop_qual),
   'gid': ('%G', num_qual('-gid')),
   'group': ('%g', owner_qual('-group')),
   'hardlinks': ('%n', hardlink_qual),
   'inum': ('%i', num_qual('-inum')),
   'modified': ('%T+', time_qual('m'), time_serializer),
   'path': ('%P', path_qual),
-  'perms': ('%m'),
-  'selinux': ('%Z'),
+  'perms': ('%m', noop_qual),
+  'selinux': ('%Z', noop_qual),
   'size': ('%s', size_qual),
-  'sparseness': ('%S'),
+  'sparseness': ('%S', noop_qual),
   'symlink': ('%l', symlink_qual),
   'type': ('%Y', type_qual),
   'uid': ('%U', num_qual('-uid')),
