@@ -48,7 +48,7 @@ class FindWrapper(ForeignDataWrapper):
         path_index = len(handlers[0])
 
     # set up program arguments
-    args = ['/usr/bin/find', '-O3', '-L', self._root,
+    args = ['/usr/bin/find', '-O3', self._root,
             '-regextype', 'posix-egrep', '-ignore_readdir_race']
 
     # TODO: quals disabled until functionality complete
@@ -114,9 +114,7 @@ class FindWrapper(ForeignDataWrapper):
         handlers[option] = (2, value, noop_qual, default_serializer)
       elif '(' not in value:  # not a regex pattern, therefore an alias
         if value in BUILTINS:
-          alias = BUILTINS[value]
-          serializer = default_serializer if len(alias) < 3 else alias[2]
-          handlers[option] = (0, alias[0], alias[1], serializer)
+          handlers[option] = as_handler(BUILTINS[value])
         else:
           log_to_postgres(logging.ERROR, 'Invalid alias: ' + value)
           return
@@ -142,15 +140,17 @@ class FindWrapper(ForeignDataWrapper):
       if colname in handlers:
         continue  # Already handled by aliasing
       elif colname in BUILTINS:
-        handler = BUILTINS[colname]
-        serializer = default_serializer if len(handler) < 3 else handler[2]
-        handlers[colname] = (0, handler[0], handler[1], serializer)
+        handlers[colname] = as_handler(BUILTINS[colname])
       elif colname == 'debug_quals':
         continue  # handle by name
       else:
         log_to_postgres(logging.ERROR, 'Invalid column: ' + colname)
         return
 
+def as_handler(builtin):
+  qualifier = noop_qual if len(builtin) < 2 else builtin[1]
+  serializer = default_serializer if len(builtin) < 3 else builtin[2]
+  return (0, builtin[0], qualifier, serializer)
 
 PATTERN_RE = re.compile('\(\?P<\s*([^ \)]+)\s*>')
 
@@ -302,22 +302,22 @@ BUILTINS = {
   'accessed': ('%A+', time_qual('a'), time_serialize),
   'changed': ('%C+', time_qual('c'), time_serialize),
   'depth': ('%d', depth_qual),
-  'devnum': ('%D', noop_qual),
+  'devnum': ('%D'),
   'dirname': ('%h', dir_qual),
-  'eperms': ('%M', noop_qual),
+  'eperms': ('%M'),
   'filename': ('%f', name_qual),
   'filesystem': ('%F', fs_qual),
-  'fullpath': ('%p', noop_qual),
+  'fullpath': ('%p'),
   'gid': ('%G', num_qual('-gid')),
   'group': ('%g', owner_qual('-group')),
   'hardlinks': ('%n', hardlink_qual),
   'inum': ('%i', num_qual('-inum')),
   'modified': ('%T+', time_qual('m'), time_serialize),
   'path': ('%P', path_qual),
-  'perms': ('%m', noop_qual),
-  'selinux': ('%Z', noop_qual),
+  'perms': ('%m'),
+  'selinux': ('%Z'),
   'size': ('%s', size_qual),
-  'sparseness': ('%S', noop_qual),
+  'sparseness': ('%S'),
   'symlink': ('%l', symlink_qual),
   'type': ('%Y', type_qual),
   'uid': ('%U', num_qual('-uid')),

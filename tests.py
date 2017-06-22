@@ -28,7 +28,7 @@ ID_PATTERN = 1
 ID_EXECUTABLE = 2
 
 TEST_DIR = '/usr/share/example/'
-TEST_ARGS = ['/usr/bin/find', '-O3', '-L', TEST_DIR,
+TEST_ARGS = ['/usr/bin/find', '-O3', TEST_DIR,
              '-regextype', 'posix-egrep', '-ignore_readdir_race']
 
 class FindWrapperTests(TestCase):
