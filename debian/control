@@ -9,7 +9,6 @@ X-Python-Version: >= 3.3
 
 
 Package: pg-gnufind
-Version: 1.0.0-1
 Architecture: all
 Section: python
 Depends: postgresql-python3-multicorn, ${misc:Depends}, ${python:Depends}
