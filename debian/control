@@ -3,7 +3,7 @@ Section: python
 Priority: optional
 Maintainer: Miles Elam, <miles@geekspeak.org>
 Build-Depends: debhelper (>= 7),
-               python3 (>= 3.3.0-1)
+               python3 (>= 3.3)
 Standards-Version: 3.9.2
 X-Python-Version: >= 3.3
 
