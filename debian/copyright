@@ -1,0 +1,7 @@
+Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: pg_gnufind
+Upstream-Contact: Miles Elam, <miles@geekspeak.org>
+
+Files: *
+Copyright: 2017, Miles Elam, <miles@geekspeak.org>
+License: GPL-2

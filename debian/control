@@ -1,0 +1,22 @@
+Source: pg-gnufind
+Version: 1.0.0-1
+Section: python
+Priority: optional
+Maintainer: Miles Elam, <miles@geekspeak.org>
+Build-Depends: debhelper (>= 7),
+               python (>= 3.3.0-1)
+Standards-Version: 3.9.2
+X-Python-Version: >= 3.3
+
+
+Package: pg-gnufind
+Architecture: all
+Section: python
+Depends: postgresql-python3-multicorn, ${misc:Depends}, ${python:Depends}
+Description: GNU find output as PostgreSQL foreign tables (multicorn)
+ Within PostgreSQL, install the multicorn extension, create the foreign data
+ server, and make your tables.
+ .
+ Can translate all file attributes supported by GNU find into table columns.
+ In addition, can execute secondary programs for additional file info, e.g.,
+ /usr/bin/file for MIME type or /usr/bin/shasum for a content hash.
