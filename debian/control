@@ -1,15 +1,15 @@
 Source: pg-gnufind
-Version: 1.0.0-1
 Section: python
 Priority: optional
 Maintainer: Miles Elam, <miles@geekspeak.org>
 Build-Depends: debhelper (>= 7),
-               python (>= 3.3.0-1)
+               python3 (>= 3.3.0-1)
 Standards-Version: 3.9.2
 X-Python-Version: >= 3.3
 
 
 Package: pg-gnufind
+Version: 1.0.0-1
 Architecture: all
 Section: python
 Depends: postgresql-python3-multicorn, ${misc:Depends}, ${python:Depends}
