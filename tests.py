@@ -21,7 +21,7 @@ class multicorn:
 import sys
 sys.modules['multicorn'] = multicorn
 
-from ttfkam import FindWrapper
+from gnufind import FindWrapper
 
 ID_BUILTIN = 0
 ID_PATTERN = 1
@@ -43,8 +43,8 @@ class FindWrapperTests(TestCase):
     fw = FindWrapper({ 'root_directory': '/dir/no/slash' }, columns)
     self.assertEqual(fw._root, '/dir/no/slash/')
 
-  @patch('ttfkam.Popen')
-  @patch('ttfkam.PIPE')
+  @patch('gnufind.Popen')
+  @patch('gnufind.PIPE')
   def test_basic(self, mock_pipe, mock_popen):
     process_mock = MagicMock()
     process_attrs = { 'stdout': StringIO('example.txt\t2017-03-22+22:33:15.3646792370\n') }
@@ -63,8 +63,8 @@ class FindWrapperTests(TestCase):
     mock_popen.assert_called_with(expected, stdout=mock_pipe, universal_newlines=True)
     self.assertEqual(row, { 'modified': '2017-03-22 22:33:15.3646792370', 'path': 'example.txt' })
 
-  @patch('ttfkam.Popen')
-  @patch('ttfkam.PIPE')
+  @patch('gnufind.Popen')
+  @patch('gnufind.PIPE')
   def test_multi(self, mock_pipe, mock_popen):
     process_mock = MagicMock()
     process_attrs = { 'stdout': StringIO('example1.txt\t2017-03-22+22:33:15.3646792370\n' +
@@ -79,8 +79,8 @@ class FindWrapperTests(TestCase):
     row = next(rows)
     self.assertEqual(row, { 'modified': '2017-03-22 22:33:45.3646792370', 'path': 'example2.txt' })
 
-  @patch('ttfkam.Popen')
-  @patch('ttfkam.PIPE')
+  @patch('gnufind.Popen')
+  @patch('gnufind.PIPE')
   def test_exec(self, mock_pipe, mock_popen):
     process_mock = MagicMock()
     process_attrs = { 'stdout': StringIO('example.txt\t2017-03-22+22:33:15.3646792370\n' +
@@ -98,8 +98,8 @@ class FindWrapperTests(TestCase):
                              '-exec', '/usr/bin/file', '-b', '-i', '{}', ';' ]
     mock_popen.assert_called_with(expected, stdout=mock_pipe, universal_newlines=True)
 
-  @patch('ttfkam.Popen')
-  @patch('ttfkam.PIPE')
+  @patch('gnufind.Popen')
+  @patch('gnufind.PIPE')
   def test_alias(self, mock_pipe, mock_popen):
     process_mock = MagicMock()
     process_attrs = { 'stdout': StringIO('example.txt\t2017-03-22+22:33:15.3646792370\n') }
@@ -114,8 +114,8 @@ class FindWrapperTests(TestCase):
     expected = TEST_ARGS + [ '-printf', '%P\t%T+\n' ]
     mock_popen.assert_called_with(expected, stdout=mock_pipe, universal_newlines=True)
 
-  @patch('ttfkam.Popen')
-  @patch('ttfkam.PIPE')
+  @patch('gnufind.Popen')
+  @patch('gnufind.PIPE')
   def test_quals(self, mock_pipe, mock_popen):
     process_mock = MagicMock()
     process_attrs = { 'stdout': StringIO('example.txt\n') }
@@ -128,8 +128,8 @@ class FindWrapperTests(TestCase):
     expected = TEST_ARGS + [ '-mindepth', '2', '-maxdepth', '2', '-type', 'f', '-printf', '%P\n' ]
     mock_popen.assert_called_with(expected, stdout=mock_pipe, universal_newlines=True)
 
-  @patch('ttfkam.Popen')
-  @patch('ttfkam.PIPE')
+  @patch('gnufind.Popen')
+  @patch('gnufind.PIPE')
   def test_pattern(self, mock_pipe, mock_popen):
     process_mock = MagicMock()
     process_attrs = { 'stdout': StringIO(TEST_DIR + 'example.txt\n') }
@@ -143,8 +143,8 @@ class FindWrapperTests(TestCase):
     expected = TEST_ARGS + [ '-printf', '%P\n' ]
     mock_popen.assert_called_with(expected, stdout=mock_pipe, universal_newlines=True)
 
-  @patch('ttfkam.Popen')
-  @patch('ttfkam.PIPE')
+  @patch('gnufind.Popen')
+  @patch('gnufind.PIPE')
   def test_anonymous_pattern(self, mock_pipe, mock_popen):
     process_mock = MagicMock()
     process_attrs = { 'stdout': StringIO(TEST_DIR + 'example.txt\n') }
