@@ -28,7 +28,7 @@ Download pg_geekspeak and run the following inside the project directory
 Verify all tests pass, then install.
 
 ```bash
-  $ sudo cp -r ttfkam /usr/lib/python3/dist-packages/
+  $ sudo dpkg -i pg-gnufind_1.0.0-1_all.deb
 ```
 
 Within PostgreSQL, install the multicorn extension, create the foreign data server, and make your tables.
