@@ -14,11 +14,6 @@ you install the python3 version of multicorn.
 ```bash
   $ sudo apt-get install postgresql-9.6 postgresql-9.6-python3-multicorn
 ```
-Install development tools
-
-```bash
-  $ sudo apt-get install postgresql-server-dev-9.6
-```
 Download pg_geekspeak and run the following inside the project directory
 
 ```bash
